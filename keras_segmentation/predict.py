@@ -291,6 +291,8 @@ def evaluate(model=None, inp_images=None, annotations=None,
     fn = np.zeros(model.n_classes)
     n_pixels = np.zeros(model.n_classes)
 
+    pix_acc = []
+
     for inp, ann in tqdm(zip(inp_images, annotations)):
         pr = predict(model, inp, read_image_type=read_image_type)
         gt = get_segmentation_array(ann, model.n_classes,
@@ -299,6 +301,9 @@ def evaluate(model=None, inp_images=None, annotations=None,
         gt = gt.argmax(-1)
         pr = pr.flatten()
         gt = gt.flatten()
+
+        acc = (gt == pr).sum() / len(gt)
+        pix_acc.append(acc)
 
         for cl_i in range(model.n_classes):
 
@@ -311,9 +316,11 @@ def evaluate(model=None, inp_images=None, annotations=None,
     n_pixels_norm = n_pixels / np.sum(n_pixels)
     frequency_weighted_IU = np.sum(cl_wise_score*n_pixels_norm)
     mean_IU = np.mean(cl_wise_score)
+    mean_acc = sum(pix_acc) / len(pix_acc)
 
     return {
         "frequency_weighted_IU": frequency_weighted_IU,
         "mean_IU": mean_IU,
-        "class_wise_IU": cl_wise_score
+        "class_wise_IU": cl_wise_score,
+        "mean_accuracy": mean_acc
     }
